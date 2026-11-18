@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Papa-Status">
+<meta name="theme-color" content="#e9ecf0">
+<title>Papa-Status</title>
+<style>
+:root{
+  --bg:#e9ecf0; --card:#ffffff; --line:#d3d9e1; --ink:#1b2330; --muted:#64708a;
+  --red:#d6334a; --green:#1f8f5f; --amber:#e8a30c; --blue:#2f6fed;
+  --r:22px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.hidden{display:none!important}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+h1{font-size:1.35rem;margin:0;font-weight:750;letter-spacing:-.01em}
+.chip{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--card);
+  color:var(--ink);border-radius:999px;padding:10px 16px;font-size:1rem;font-weight:600;cursor:pointer}
+.dot{width:11px;height:11px;border-radius:50%;background:#aab3c2;flex:none}
+.dot.ok{background:var(--green)} .dot.off{background:var(--red)} .dot.wait{background:var(--amber)}
+
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#dde2e9;padding:6px;border-radius:18px;margin-bottom:18px}
+.tab{border:0;background:transparent;color:var(--muted);border-radius:13px;padding:12px 8px;font-size:1.1rem;font-weight:700;cursor:pointer;line-height:1.25}
+.tab small{display:block;font-size:.82rem;font-weight:500;margin-top:1px}
+.tab[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,30,50,.12)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.card h2{margin:0 0 6px;font-size:1.3rem}
+.card p{margin:0 0 16px;color:var(--muted);line-height:1.45}
+label{display:block;font-weight:650;margin:14px 0 6px}
+input[type=text]{width:100%;font-size:1.15rem;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:#f7f9fb;color:var(--ink)}
+input[type=text]:focus{outline:3px solid rgba(47,111,237,.3);border-color:var(--blue)}
+.primary{width:100%;margin-top:18px;border:0;border-radius:16px;background:var(--ink);color:#fff;font-size:1.15rem;font-weight:700;padding:16px;cursor:pointer}
+.primary:active{transform:scale(.99)}
+.err{color:var(--red);font-weight:600;margin-top:10px;min-height:1.2em}
+details{margin-top:16px;color:var(--muted)} summary{cursor:pointer;font-weight:600}
+
+/* Sender */
+.big-list{display:grid;gap:14px}
+.btn-big{--c:var(--muted);display:flex;align-items:center;gap:18px;width:100%;min-height:112px;padding:20px 24px;
+  border-radius:var(--r);border:2px solid var(--line);background:var(--card);color:var(--ink);
+  font-size:clamp(1.4rem,5.4vw,1.9rem);font-weight:750;text-align:left;cursor:pointer;
+  transition:transform .08s, border-color .15s, background .15s}
+.btn-big::before{content:"";flex:none;width:22px;height:22px;border-radius:50%;background:var(--c)}
+.btn-big:active{transform:scale(.98)}
+.btn-big.active{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,#fff)}
+.btn-big.sent{animation:sent .7s ease}
+@keyframes sent{0%{background:var(--c);color:#fff}100%{}}
+.now{margin:16px 4px 0;color:var(--muted);font-size:1.05rem}
+
+/* Empfänger */
+.status{--c:var(--muted);border-radius:28px;padding:clamp(28px,7vw,54px) clamp(22px,5vw,40px);
+  background:var(--c);color:#fff;transition:background .3s}
+.status.amber{color:#2a1d00}
+.status .t{font-size:clamp(2.4rem,10vw,4.6rem);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:0}
+.status .s{margin:18px 0 0;font-size:clamp(1.1rem,3.4vw,1.5rem);opacity:.92;font-weight:550}
+.enable{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:16px 18px;
+  border-radius:18px;background:#fff7e0;border:1px solid #f0d58a;color:#4a3800}
+.enable button{flex:none;border:0;border-radius:12px;background:#4a3800;color:#fff;font-weight:700;font-size:1rem;padding:12px 16px;cursor:pointer}
+.log{margin-top:22px}
+.log h3{margin:0 4px 10px;font-size:1.1rem}
+.log ul{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.log li{display:flex;align-items:center;gap:14px;padding:16px 20px;font-size:1.15rem;font-weight:600}
+.log li+li{border-top:1px solid var(--line)}
+.log li i{width:12px;height:12px;border-radius:50%;flex:none}
+.log li time{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:500}
+.log li.empty{color:var(--muted);font-weight:500}
+.foot{margin:18px 4px 0;color:var(--muted);font-size:.95rem}
+
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:50;background:var(--c,var(--red))}
+#flash.go{animation:fl 1.6s ease-out 1}
+@keyframes fl{0%,40%,80%{opacity:.75}20%,60%,100%{opacity:0}}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,30px);
+  opacity:0;pointer-events:none;background:var(--ink);color:#fff;padding:15px 24px;border-radius:16px;
+  font-size:1.1rem;font-weight:650;max-width:92vw;text-align:center;transition:.25s;z-index:60}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:var(--red)} #toast.ok{background:var(--green)}
+@media (prefers-reduced-motion:reduce){#flash.go{animation:none;opacity:.35}.btn-big.sent{animation:none}}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+<div class="wrap">
+  <header>
+    <h1>Papa-Status</h1>
+    <div class="chip" id="roomChip"><span class="dot" id="dot"></span><span id="roomLabel">Verbindung</span></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-view="sender">Sender<small>Younus</small></button>
+    <button class="tab" role="tab" data-view="empfaenger">Empfänger<small>Laith</small></button>
+  </nav>
+
+  <div class="enable hidden" id="notice" style="margin:0 0 16px"><span id="noticeText"></span></div>
+
+  <section id="sender" class="hidden">
+    <div class="big-list" id="btnList"></div>
+    <p class="now" id="senderNow"></p>
+  </section>
+
+  <section id="empfaenger" class="hidden">
+    <div class="status" id="statusCard">
+      <p class="t" id="statusText">Noch keine Meldung</p>
+      <p class="s" id="statusTime">Warte auf die erste Meldung</p>
+    </div>
+    <div class="enable hidden" id="enableBox">
+      <span>Ton und Benachrichtigungen aktivieren, damit du Meldungen sofort bemerkst.</span>
+      <button id="enableBtn">Aktivieren</button>
+    </div>
+    <div class="log">
+      <h3>Letzte Meldungen</h3>
+      <ul id="logList"></ul>
+    </div>
+    <p class="foot" id="connText"></p>
+  </section>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+(() => {
+  /* Firebase-Projekt (Realtime Database). Die Adresse der Datenbank wird automatisch gefunden. */
+  const PROJECT_ID = "familieninfo-laith";
+  const CANDIDATES = [
+    `https://${PROJECT_ID}-default-rtdb.europe-west1.firebasedatabase.app`,
+    `https://${PROJECT_ID}-default-rtdb.firebaseio.com`,
+    `https://${PROJECT_ID}-default-rtdb.asia-southeast1.firebasedatabase.app`
+  ];
+
+  const STATES = {
+    draussen: { text: "Papa ist draußen",          color: "red"   },
+    drinnen:  { text: "Papa ist wieder im Zimmer", color: "green" },
+    kueche:   { text: "Papa ist in der Küche / im Bad", color: "amber" }
+  };
+  const $ = s => document.querySelector(s);
+  const store = {
+    get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+    set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+  };
+
+  const room = "main";
+  let view = store.get("ps_view") === "empfaenger" ? "empfaenger" : "sender";
+  let DB = "", forceSetup = false, es = null, log = [], current = null, ac = null, wl = null;
+  const loadCache = () => { try { return JSON.parse(store.get("ps_last_" + room)); } catch(e){ return null; } };
+  current = loadCache();
+
+  const fmt = (ts, sec) => new Date(ts).toLocaleTimeString("de-DE", sec ? {hour:"2-digit",minute:"2-digit",second:"2-digit"} : {hour:"2-digit",minute:"2-digit"});
+  const rel = ts => {
+    const d = Math.max(0, Math.round((Date.now() - ts) / 1000));
+    if (d < 10) return "gerade eben";
+    if (d < 60) return `vor ${d} Sek.`;
+    if (d < 3600) return `vor ${Math.floor(d/60)} Min.`;
+    return `vor ${Math.floor(d/3600)} Std.`;
+  };
+
+  /* ---------- UI ---------- */
+  function toast(msg, kind) {
+    const t = $("#toast"); t.textContent = msg; t.className = "show " + (kind || "");
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.className = "", 2600);
+  }
+  function setConn(state) {
+    $("#dot").className = "dot " + state;
+    $("#connText").textContent = { ok: "Echtzeit-Verbindung aktiv", wait: "Verbinde …", off: "Keine Verbindung – es wird neu versucht" }[state] || "";
+  }
+  function updateViews() {
+    const setup = false;
+    $("#sender").classList.toggle("hidden", setup || view !== "sender");
+    $("#empfaenger").classList.toggle("hidden", setup || view !== "empfaenger");
+    document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.view === view));
+        $("#enableBox").classList.toggle("hidden", !(view === "empfaenger" && needsEnable()));
+  }
+  function render() {
+    const s = current && STATES[current.key];
+    const card = $("#statusCard");
+    card.style.setProperty("--c", s ? `var(--${s.color})` : "var(--muted)");
+    card.classList.toggle("amber", !!s && s.color === "amber");
+    $("#statusText").textContent = s ? s.text : (current ? current.key : "Noch keine Meldung");
+    $("#statusTime").textContent = current ? `Seit ${fmt(current.ts)} Uhr · ${rel(current.ts)}` : "Warte auf die erste Meldung";
+    document.querySelectorAll(".btn-big").forEach(b => b.classList.toggle("active", !!current && b.dataset.key === current.key));
+    $("#senderNow").textContent = current && s ? `Aktuell gemeldet: ${s.text} (${fmt(current.ts)} Uhr)` : "Noch nichts gemeldet.";
+  }
+  function renderLog() {
+    const ul = $("#logList");
+    if (!log.length) { ul.innerHTML = '<li class="empty">Noch keine Meldungen</li>'; return; }
+    ul.innerHTML = "";
+    log.forEach(e => {
+      const s = STATES[e.key]; const li = document.createElement("li");
+      const i = document.createElement("i"); i.style.background = s ? `var(--${s.color})` : "var(--muted)";
+      const sp = document.createElement("span"); sp.textContent = s ? s.text : e.key;
+      const t = document.createElement("time"); t.textContent = fmt(e.ts, true);
+      li.append(i, sp, t); ul.append(li);
+    });
+  }
+  function buildButtons() {
+    const list = $("#btnList");
+    Object.entries(STATES).forEach(([key, s]) => {
+      const b = document.createElement("button");
+      b.className = "btn-big"; b.dataset.key = key; b.textContent = s.text;
+      b.style.setProperty("--c", `var(--${s.color})`);
+      b.onclick = () => send(key, b);
+      list.append(b);
+    });
+  }
+
+  /* ---------- Datenbank finden ---------- */
+  function notice(t) { $("#noticeText").textContent = t || ""; $("#notice").classList.toggle("hidden", !t); }
+  let netFail = false;
+  async function findDb() {
+    if (DB) return true;
+    netFail = false;
+    const saved = store.get("ps_db");
+    const list = saved ? [saved, ...CANDIDATES.filter(u => u !== saved)] : CANDIDATES;
+    for (const u of list) {
+      try {
+        const r = await fetch(`${u}/rooms/${room}/status.json`);
+        if (r.status !== 404) { DB = u; store.set("ps_db", u); return true; }
+      } catch (e) { netFail = true; }
+    }
+    return false;
+  }
+
+  /* ---------- Senden ---------- */
+  async function send(key, btn) {
+    if (!(await findDb())) { toast("Datenbank nicht gefunden. Bitte Einrichtung prüfen.", "err"); return; }
+    const id = Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+    const entry = { key, ts: { ".sv": "timestamp" } };
+    const body = { status: entry }; body["log/" + id] = entry;
+    try {
+      const r = await fetch(`${DB}/rooms/${room}.json`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      });
+      if (r.status === 401 || r.status === 403) { toast("Keine Berechtigung. Firebase-Regeln prüfen.", "err"); return; }
+      if (!r.ok) throw new Error(r.status);
+      if (navigator.vibrate) navigator.vibrate(40);
+      btn.classList.remove("sent"); void btn.offsetWidth; btn.classList.add("sent");
+      toast("Gesendet: " + STATES[key].text, "ok");
+    } catch (e) {
+      toast("Nicht gesendet. Bitte nochmal tippen.", "err");
+    }
+  }
+
+  /* ---------- Empfangen ---------- */
+  function onStatus(d) {
+    if (!d || typeof d.ts !== "number") { render(); return; }
+    const isNew = !current || d.ts !== current.ts;
+    const doIt = current && d.ts > current.ts && view === "empfaenger";
+    current = d; store.set("ps_last_" + room, JSON.stringify(d));
+    render();
+    if (isNew) fetchLog();
+    if (doIt) alertNew(d);
+  }
+  async function fetchLog() {
+    if (!DB) return;
+    try {
+      const r = await fetch(`${DB}/rooms/${room}/log.json?orderBy=%22%24key%22&limitToLast=15`);
+      if (!r.ok) throw 0;
+      const o = (await r.json()) || {};
+      log = Object.keys(o).sort().reverse().map(k => o[k]).filter(e => e && typeof e.ts === "number");
+      renderLog();
+    } catch (e) {}
+  }
+  async function poll() {
+    if (!DB) return;
+    try {
+      const r = await fetch(`${DB}/rooms/${room}/status.json`);
+      if (r.ok) onStatus(await r.json());
+    } catch (e) {}
+  }
+  async function connect() {
+    if (es) { es.close(); es = null; }
+    setConn("wait");
+    if (!(await findDb())) {
+      notice(netFail
+        ? "Keine Verbindung zu Firebase. Öffnest du die Seite in einer Vorschau oder ohne Internet? Öffne sie als normale Webseite in Safari (über einen Link) oder prüfe dein Internet."
+        : "Die Datenbank wurde nicht gefunden. Prüfe in Firebase unter „Realtime Database“, ob sie erstellt wurde.");
+      setConn("off"); setTimeout(connect, 8000); return;
+    }
+    notice("");
+    try { es = new EventSource(`${DB}/rooms/${room}/status.json`); } catch (e) { setConn("off"); return; }
+    es.addEventListener("put", e => {
+      setConn("ok");
+      try { const m = JSON.parse(e.data); if (m.path === "/") onStatus(m.data); else poll(); } catch (_) {}
+    });
+    es.addEventListener("patch", () => { setConn("ok"); poll(); });
+    es.addEventListener("cancel", () => {
+      notice("Keine Berechtigung. Bitte die Regeln in Firebase wie beschrieben setzen und veröffentlichen.");
+      setConn("off"); if (es) es.close(); es = null; setTimeout(connect, 8000);
+    });
+    es.onerror = () => {
+      setConn(navigator.onLine ? "wait" : "off");
+      if (es && es.readyState === 2) setTimeout(connect, 3000);
+    };
+    fetchLog();
+  }
+
+  /* ---------- Alarm (Empfänger) ---------- */
+  function unlockAudio() {
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); ac.resume(); } catch (e) {}
+  }
+  function beep(n) {
+    if (!ac) return;
+    for (let i = 0; i < n; i++) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = n > 1 ? 880 : 620; o.connect(g); g.connect(ac.destination);
+      const t = ac.currentTime + i * 0.35;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+      o.start(t); o.stop(t + 0.3);
+    }
+  }
+  function needsEnable() {
+    return !ac || ("Notification" in window && Notification.permission === "default");
+  }
+  function alertNew(d) {
+    const s = STATES[d.key] || { text: "Neue Meldung", color: "blue" };
+    const f = $("#flash"); f.style.setProperty("--c", `var(--${s.color})`);
+    f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+    beep(d.key === "draussen" ? 3 : 1);
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    document.title = "● " + s.text;
+    if ("Notification" in window && Notification.permission === "granted") {
+      try { new Notification(s.text, { body: `Meldung um ${fmt(d.ts)} Uhr`, tag: "papa-status", renotify: true }); } catch (e) {}
+    }
+  }
+  async function keepAwake() {
+    try {
+      if ("wakeLock" in navigator && view === "empfaenger" && document.visibilityState === "visible" && !wl) {
+        wl = await navigator.wakeLock.request("screen");
+        wl.addEventListener("release", () => { wl = null; });
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- Events ---------- */
+  document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+    view = b.dataset.view; store.set("ps_view", view); forceSetup = false;
+    updateViews(); keepAwake();
+  });
+  $("#enableBtn").onclick = async () => {
+    unlockAudio(); beep(1);
+    if ("Notification" in window) { try { await Notification.requestPermission(); } catch (e) {} }
+    keepAwake(); updateViews();
+  };
+  document.addEventListener("pointerdown", unlockAudio, { once: true });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      document.title = "Papa-Status";
+      if (!es || es.readyState === 2) connect(); else poll();
+      keepAwake();
+    }
+  });
+  window.addEventListener("online", connect);
+  window.addEventListener("offline", () => setConn("off"));
+  setInterval(() => { render(); if (!es || es.readyState !== 1) poll(); }, 10000);
+
+  /* ---------- Start ---------- */
+  buildButtons(); renderLog(); render(); updateViews();
+  connect(); keepAwake();
+})();
+</script>
+</body>
+</html>
